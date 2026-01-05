@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <title>N플리마켓 템플릿 관리</title>
+    <style>
+        body {
+            width: 320px;
+            padding: 20px;
+            font-family: sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+        }
+
+        .title {
+            font-size: 18px;
+            font-weight: 800;
+            margin-bottom: 20px;
+            color: #03c75a;
+        }
+
+        .btn-save {
+            width: 100%;
+            background: #03c75a;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .btn-import {
+            width: 100%;
+            background: #fff;
+            color: #03c75a;
+            border: 1px solid #03c75a;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .btn-control-group {
+            display: flex;
+            gap: 5px;
+        }
+
+        .btn-icon {
+            background: #f1f1f1;
+            border: none;
+            color: #666;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        .btn-icon:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-delete:hover {
+            background: #ffeded;
+            color: #ff4d4f;
+        }
+
+        .template-list {
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
+
+        .template-item {
+            background: white;
+            border: 1px solid #eaeaea;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .info-area {
+            cursor: pointer;
+            flex-grow: 1;
+        }
+
+        .template-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .btn-delete {
+            background: #f1f1f1;
+            border: none;
+            color: #999;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        .btn-delete:hover {
+            background: #ffeded;
+            color: #ff4d4f;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="title">N플리마켓 템플릿 관리</div>
+    <div class="button-group">
+        <button id="saveBtn" class="btn-save">현재 상품 템플릿으로 저장</button>
+        <button id="importBtn" class="btn-import">JSON 템플릿 가져오기</button>
+        <input type="file" id="importInput" accept=".json" style="display: none;">
+    </div>
+
+    <div class="template-list" id="templateList"></div>
+
+    <script src="popup.js"></script>
+</body>
+
+</html>
