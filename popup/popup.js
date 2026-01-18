@@ -5,6 +5,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const templateList = document.getElementById('templateList');
     const STORAGE_KEY = 'fleamarket_templates';
 
+    let isProcessing = false;
+
     const loadTemplates = () => {
         chrome.storage.local.get([STORAGE_KEY], (result) => {
             const templates = result[STORAGE_KEY] || [];
@@ -30,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderTemplates(templates) {
         templateList.innerHTML = '';
-        const globalTooltip = document.getElementById('globalTooltip'); // Get shared tooltip
+        const globalTooltip = document.getElementById('globalTooltip');
 
         if (templates.length === 0) {
             templateList.innerHTML = `
@@ -52,6 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="info-area">
                     <div class="template-name" title="${t.title}">${t.title}</div>
                     <div class="template-date">${date}</div>
+                </div>
                 </div>
                 <div class="btn-control-group">
                     <button class="btn-icon btn-export" title="내보내기">저장</button>
@@ -78,19 +81,29 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             item.querySelector('.info-area').addEventListener('click', async () => {
+                if (isProcessing) return;
+                isProcessing = true;
+                utils.showToast("⏳ 매크로 실행 요청...");
+
+                const timeoutId = setTimeout(() => {
+                    if (isProcessing) {
+                        isProcessing = false;
+                        utils.showToast("⏳ 응답 시간이 초과되었습니다.");
+                    }
+                }, 3000);
+
                 const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
                 if (tab?.id) {
-                    utils.showToast("⏳ 매크로 실행 요청...");
-
                     chrome.tabs.sendMessage(tab.id, {
                         action: "SET_TEMP_DATA",
                         data: t.content
                     }, (response) => {
+                        clearTimeout(timeoutId);
+                        if (!isProcessing) return;
+
+                        isProcessing = false;
+
                         if (chrome.runtime.lastError) {
-                            // Suppress error toast if it's just a connection issue/refresh needed, 
-                            // or show it if user really needs to know. 
-                            // User asked to remove locking, so we just show simple feedback or nothing.
-                            // Keeping "Refresh" advice is helpful though.
                             utils.showToast("새로고침 하거나 지원되지 않는 페이지입니다.");
                             return;
                         }
@@ -102,6 +115,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     });
                 } else {
+                    clearTimeout(timeoutId);
+                    isProcessing = false;
                     utils.showToast("활성화된 탭을 찾을 수 없습니다.");
                 }
             });

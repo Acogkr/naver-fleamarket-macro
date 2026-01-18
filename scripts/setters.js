@@ -1,12 +1,12 @@
 window.setters = {
     [CONSTANTS.PATHS.BASIC]: async (data) => {
-        document.querySelector('.ProductNewBasicUnitUi_btnCategory__Jz2KE')?.click();
-        await utils.waitForElement('.CategoryUnitUi_text__lwXDX');
+        document.querySelector(CONSTANTS.SELECTORS.CATEGORY_BTN)?.click();
+        await utils.waitForElement(CONSTANTS.SELECTORS.CATEGORY_UNIT);
         await setters[CONSTANTS.PATHS.CATEGORIES](data);
         await utils.wait();
 
-        document.querySelector('a.ProductNewBasicUnitUi_infoChip___DWMr')?.click();
-        await utils.waitForElementByText('button', "없음");
+        document.querySelector(CONSTANTS.SELECTORS.INFO_CHIP)?.click();
+        await utils.waitForElementByText('button', window.CONSTANTS.UI_TEXT.NONE);
         await setters[CONSTANTS.PATHS.PROPERTIES](data);
         await utils.wait();
 
@@ -28,7 +28,7 @@ window.setters = {
         const paths = typeof categoryData === 'string' ? categoryData.split(' > ') : [];
 
         for (const name of paths) {
-            const target = await utils.clickByText('span.CategoryUnitUi_text__lwXDX', name.trim());
+            const target = await utils.clickByText(CONSTANTS.SELECTORS.CATEGORY_TEXT, name.trim());
             if (target) await utils.wait();
         }
         (await utils.waitForElementByText('button', window.CONSTANTS.UI_TEXT.COMPLETE)).click();
@@ -151,11 +151,11 @@ window.setters = {
         for (const fullLoc of locations) {
             const parts = fullLoc.split(' ').filter(t => t.trim() !== "");
             for (const part of parts) {
-                const chip = await utils.clickByText('span[class*="DsChipUi_text"]', part);
+                const chip = await utils.clickByText(CONSTANTS.SELECTORS.REGION_CHIP, part);
                 if (chip) await utils.wait(800);
             }
         }
-        (await utils.waitForElementByText('span', window.CONSTANTS.UI_TEXT.COMPLETE)).closest('span[class*="DsButtonUi_wrap"]')?.click();
+        (await utils.waitForElementByText('span', window.CONSTANTS.UI_TEXT.COMPLETE)).closest(CONSTANTS.SELECTORS.REGION_COMPLETE_BTN)?.click();
     },
 
     [CONSTANTS.PATHS.PUBLISH_CONFIGS]: async (data) => {
@@ -181,8 +181,8 @@ window.setters = {
 
     [CONSTANTS.PATHS.CAFE_MENUS]: async (data) => {
         const target = data[CONSTANTS.PATHS.PUBLISH_CONFIGS].boardName;
-        await utils.waitForElement('span[class*="SelectListButtonUi_mainText"]');
-        const found = [...document.querySelectorAll('span[class*="SelectListButtonUi_mainText"]')].find(el => el.innerText.includes(target));
+        await utils.waitForElement(CONSTANTS.SELECTORS.CAFE_MENU_TEXT);
+        const found = [...document.querySelectorAll(CONSTANTS.SELECTORS.CAFE_MENU_TEXT)].find(el => el.innerText.includes(target));
         if (found) {
             found.closest('button')?.click();
             await utils.wait(500);

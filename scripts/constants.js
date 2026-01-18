@@ -25,7 +25,16 @@ window.CONSTANTS = {
         BOARD_NAME: 'a[href*="/cafe-menus"] span',
         UPLOAD_INPUT: '#uploadInput',
         NEXT_BUTTON: 'button.DsButtonUi_grayDefault__2dIoY',
-        CONFIRM_BUTTON: 'button'
+        CONFIRM_BUTTON: 'button',
+        CATEGORY_UNIT: '.CategoryUnitUi_text__lwXDX',
+        CATEGORY_TEXT: 'span.CategoryUnitUi_text__lwXDX',
+        INFO_CHIP: 'a.ProductNewBasicUnitUi_infoChip___DWMr',
+        REGION_CHIP: 'span[class*="DsChipUi_text"]',
+        REGION_COMPLETE_BTN: 'span[class*="DsButtonUi_wrap"]',
+        CAFE_MENU_TEXT: 'span[class*="SelectListButtonUi_mainText"]',
+        HAS_CASE: '#hasCase',
+        HAS_WARRANTY: '#hasWarranty',
+        DIRECT_LOCATION_CHIP: 'div[class*="directTransactionArea"] span[class*="DsChipUi_text"]'
     },
     UI_TEXT: {
         NEXT: "다음",

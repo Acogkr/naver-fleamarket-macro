@@ -15,7 +15,6 @@
 body {
     width: 600px;
     height: 600px;
-    /* Fixed height for consistency */
     padding: 24px;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     background-color: var(--bg-color);
@@ -23,18 +22,14 @@ body {
     margin: 0;
     box-sizing: border-box;
     display: flex;
-    /* Flex layout */
     flex-direction: column;
-    /* Vertical stack */
     overflow: hidden;
-    /* Prevent body scroll */
 }
 
 .header {
     margin-bottom: 24px;
     text-align: center;
     flex-shrink: 0;
-    /* Don't shrink */
 }
 
 .title {
@@ -115,14 +110,10 @@ body {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    /* max-height removed, now flexible */
     flex-grow: 1;
-    /* Take remaining space */
     overflow-y: auto;
-    /* Scroll internally */
     padding-right: 5px;
     padding-bottom: 10px;
-    /* Space for tooltip/bottom edge */
 }
 
 .template-list::-webkit-scrollbar {
@@ -206,24 +197,20 @@ body {
 .global-tooltip {
     position: fixed;
     top: 20px;
-    /* Positioned at the very top (header level) */
     left: 20px;
     right: 20px;
     bottom: auto;
-    /* Remove bottom constraint */
     background: rgba(255, 255, 255, 0.98);
     border: 1px solid var(--primary-color);
     border-radius: 12px;
     padding: 16px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-    /* Shadow downwards */
     z-index: 2000;
     display: none;
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.2s, transform 0.2s;
     transform: translateY(-10px);
-    /* Slide down effect */
     backdrop-filter: blur(5px);
 }
 

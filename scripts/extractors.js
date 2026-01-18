@@ -8,8 +8,8 @@ window.extractors = {
 
     [CONSTANTS.PATHS.ATTACHMENTS]: () => ({
         images: [...(window.currentImages || [])],
-        hasCase: document.querySelector('#hasCase')?.checked || false,
-        hasWarranty: document.querySelector('#hasWarranty')?.checked || false
+        hasCase: document.querySelector(CONSTANTS.SELECTORS.HAS_CASE)?.checked || false,
+        hasWarranty: document.querySelector(CONSTANTS.SELECTORS.HAS_WARRANTY)?.checked || false
     }),
 
     [CONSTANTS.PATHS.DESCRIPTION]: () => ({
@@ -35,7 +35,7 @@ window.extractors = {
         const feeInput = document.querySelector(CONSTANTS.SELECTORS.DELIVERY_FEE_INPUT);
 
         const locationChips = Array.from(
-            document.querySelectorAll('div[class*="directTransactionArea"] span[class*="DsChipUi_text"]'),
+            document.querySelectorAll(CONSTANTS.SELECTORS.DIRECT_LOCATION_CHIP),
             el => el.innerText.trim()
         ).filter(text => text !== window.CONSTANTS.UI_TEXT.DIRECT_ADD);
 

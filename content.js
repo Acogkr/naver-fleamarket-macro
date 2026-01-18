@@ -21,7 +21,6 @@ document.addEventListener('click', async (event) => {
         const extractor = window.extractors[currentPath];
         if (extractor) {
             window.temps[currentPath] = extractor();
-            console.log(`[Macro] Data saved for ${currentPath}`);
         }
     }
 });
