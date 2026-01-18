@@ -15,10 +15,11 @@ window.setters = {
         utils.setReactValue(CONSTANTS.SELECTORS.PRODUCT_NAME, basicData.productName);
 
         if (basicData.productStatus) {
-            document.querySelector(`${CONSTANTS.SELECTORS.PRODUCT_STATUS}[value="${basicData.productStatus}"]`)?.click();
+            await utils.wait(1000);
+            utils.setReactChecked(`${CONSTANTS.SELECTORS.PRODUCT_STATUS}[value="${basicData.productStatus}"]`, true);
         }
 
-        await utils.wait()
+        await utils.wait(1000)
         await utils.clickByText(CONSTANTS.SELECTORS.NEXT_BUTTON, window.CONSTANTS.UI_TEXT.NEXT);
         await setters[CONSTANTS.PATHS.ATTACHMENTS](data);
     },
@@ -72,12 +73,12 @@ window.setters = {
 
         const caseBtn = document.querySelector('#hasCase');
         if (caseBtn && caseBtn.checked !== attachmentData.hasCase) {
-            caseBtn.click();
+            utils.setReactChecked('#hasCase', attachmentData.hasCase);
         }
 
         const warrantyBtn = document.querySelector('#hasWarranty');
         if (warrantyBtn && warrantyBtn.checked !== attachmentData.hasWarranty) {
-            warrantyBtn.click();
+            utils.setReactChecked('#hasWarranty', attachmentData.hasWarranty);
         }
 
         await utils.clickByText('button', window.CONSTANTS.UI_TEXT.NEXT);
@@ -105,19 +106,18 @@ window.setters = {
         await utils.waitForElement('.productsNew_priceMarketSaleType__51dFb');
 
         if (priceData.saleType) {
-            const saleTypeBtn = document.querySelector(`${CONSTANTS.SELECTORS.SALE_TYPE}[value="${priceData.saleType}"]`);
-            saleTypeBtn?.click();
+            utils.setReactChecked(`${CONSTANTS.SELECTORS.SALE_TYPE}[value="${priceData.saleType}"]`, true);
             await utils.wait(200);
         }
 
         const negBtn = document.querySelector(CONSTANTS.SELECTORS.NEGOTIATION_CHECKBOX);
         if (negBtn && negBtn.checked !== priceData.canNegotiate) {
-            negBtn.click();
+            utils.setReactChecked(CONSTANTS.SELECTORS.NEGOTIATION_CHECKBOX, priceData.canNegotiate);
         }
 
         const crossBtn = document.querySelector(CONSTANTS.SELECTORS.CROSS_POSTING_CHECKBOX);
         if (crossBtn && crossBtn.checked !== priceData.isCrossPosting) {
-            crossBtn.click();
+            utils.setReactChecked(CONSTANTS.SELECTORS.CROSS_POSTING_CHECKBOX, priceData.isCrossPosting);
         }
 
         await utils.clickByText(CONSTANTS.SELECTORS.NEXT_BUTTON, window.CONSTANTS.UI_TEXT.NEXT);

@@ -1,6 +1,5 @@
 
 
-// Global State
 window.currentImages = window.currentImages || [];
 window.temps = window.temps || {};
 
@@ -49,7 +48,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
     else if (request.action === "SET_TEMP_DATA") {
         if (window.setters[currentPath]) {
-            // Wait for the setter to complete before sending response
             window.setters[currentPath](request.data)
                 .then(() => {
                     sendResponse({ success: true });

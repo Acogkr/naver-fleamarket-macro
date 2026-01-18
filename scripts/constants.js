@@ -7,7 +7,7 @@ window.CONSTANTS = {
         DELIVERY: '/market-products/new/delivery',
         PUBLISH_CONFIGS: '/market-products/new/publish-configs',
         CATEGORIES: '/market-products/categories',
-        PROPERTIES: '/market-products/product-properties?focusPropertyType=required',
+        PROPERTIES: '/market-products/product-properties',
         REGION: '/market-products/region',
         CAFE_MENUS: '/market-products/cafe-menus'
     },

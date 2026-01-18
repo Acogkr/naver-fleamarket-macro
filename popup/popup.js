@@ -62,7 +62,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             `;
 
-            // Hover Logic for Global Floating Preview
             item.addEventListener('mouseenter', () => {
                 const previewData = getPreviewData(t.content);
 
