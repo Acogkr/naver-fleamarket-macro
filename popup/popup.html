@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <title>N플리마켓 템플릿 관리</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+
+<body>
+    <div class="header">
+        <div class="title">N플리마켓 매크로</div>
+        <div class="subtitle">템플릿을 저장하고 관리하세요</div>
+    </div>
+
+    <div class="button-group">
+        <button id="saveBtn" class="btn btn-save">현재 페이지 상품 정보 저장하기</button>
+        <button id="importBtn" class="btn btn-import">JSON 파일에서 가져오기</button>
+        <input type="file" id="importInput" accept=".json" style="display: none;">
+    </div>
+
+    <div class="section-title">
+        <span>저장된 템플릿</span>
+        <!-- Optional: search or sort could go here -->
+    </div>
+
+    <div class="template-list" id="templateList">
+        <!-- Templates will be injected here -->
+    </div>
+
+    <!-- Global Floating Tooltip -->
+    <div id="globalTooltip" class="global-tooltip"></div>
+
+    <script src="../scripts/constants.js"></script>
+    <script src="../scripts/utils.js"></script>
+    <script src="popup.js"></script>
+</body>
+
+</html>

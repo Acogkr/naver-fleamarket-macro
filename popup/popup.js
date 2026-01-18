@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const importBtn = document.getElementById('importBtn');
     const importInput = document.getElementById('importInput');
     const templateList = document.getElementById('templateList');
-    const STORAGE_KEY = 'naver-fleamarket-templates';
+    const STORAGE_KEY = 'fleamarket_templates';
 
     const loadTemplates = () => {
         chrome.storage.local.get([STORAGE_KEY], (result) => {
@@ -12,37 +12,33 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    const showToast = (text) => {
-        const toast = document.createElement('div');
-        toast.style.cssText = `
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 12px;
-            white-space: nowrap;
-            z-index: 1000;
-            pointer-events: none;
-            transition: opacity 0.3s;
-        `;
-        toast.innerText = text;
-        document.body.appendChild(toast);
 
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            setTimeout(() => toast.remove(), 300);
-        }, 1500);
-    };
+
+
+    function getPreviewData(content) {
+        const basic = content['/market-products/new/basic'] || {};
+        const price = content['/market-products/new/price'] || {};
+        const delivery = content['/market-products/new/delivery'] || {};
+
+        return [
+            { label: '카테고리', value: basic.category || '-' },
+            { label: '상품명', value: basic.productName || '-' },
+            { label: '가격', value: price.price ? `${parseInt(price.price).toLocaleString()}원` : '-' },
+            { label: '거래방식', value: delivery.delivery?.useCourier ? '택배' : '직거래' }
+        ];
+    }
 
     function renderTemplates(templates) {
         templateList.innerHTML = '';
+        const globalTooltip = document.getElementById('globalTooltip'); // Get shared tooltip
 
         if (templates.length === 0) {
-            templateList.innerHTML = '<div style="text-align:center;color:#ccc;padding:20px;">저장된 템플릿이 없습니다.</div>';
+            templateList.innerHTML = `
+                <div style="text-align:center;color:#999;padding:40px 20px;">
+                    <div>📂</div>
+                    <div style="margin-top:10px;font-size:13px;">저장된 템플릿이 없습니다.</div>
+                </div>
+            `;
             return;
         }
 
@@ -50,9 +46,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const item = document.createElement('div');
             item.className = 'template-item';
 
+            const date = new Date(t.id).toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+
             item.innerHTML = `
                 <div class="info-area">
-                    <div class="template-name">${t.title}</div>
+                    <div class="template-name" title="${t.title}">${t.title}</div>
+                    <div class="template-date">${date}</div>
                 </div>
                 <div class="btn-control-group">
                     <button class="btn-icon btn-export" title="내보내기">저장</button>
@@ -60,22 +59,50 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             `;
 
+            // Hover Logic for Global Floating Preview
+            item.addEventListener('mouseenter', () => {
+                const previewData = getPreviewData(t.content);
+
+                globalTooltip.innerHTML = previewData.map(d => `
+                    <div class="preview-row">
+                        <span class="preview-label">${d.label}</span>
+                        <span class="preview-value">${d.value}</span>
+                    </div>
+                `).join('');
+
+                globalTooltip.classList.add('show');
+            });
+
+            item.addEventListener('mouseleave', () => {
+                globalTooltip.classList.remove('show');
+            });
+
             item.querySelector('.info-area').addEventListener('click', async () => {
                 const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
                 if (tab?.id) {
+                    utils.showToast("⏳ 매크로 실행 요청...");
+
                     chrome.tabs.sendMessage(tab.id, {
                         action: "SET_TEMP_DATA",
                         data: t.content
                     }, (response) => {
                         if (chrome.runtime.lastError) {
-                            console.error(chrome.runtime.lastError);
+                            // Suppress error toast if it's just a connection issue/refresh needed, 
+                            // or show it if user really needs to know. 
+                            // User asked to remove locking, so we just show simple feedback or nothing.
+                            // Keeping "Refresh" advice is helpful though.
+                            utils.showToast("새로고침 하거나 지원되지 않는 페이지입니다.");
                             return;
                         }
 
                         if (response && response.error) {
-                            showToast(response.error);
+                            utils.showToast(response.error);
+                        } else if (response && response.success) {
+                            utils.showToast("✅ 입력 완료!");
                         }
                     });
+                } else {
+                    utils.showToast("활성화된 탭을 찾을 수 없습니다.");
                 }
             });
 
@@ -107,27 +134,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
     saveBtn.addEventListener('click', async () => {
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (!tab) return;
 
         chrome.tabs.sendMessage(tab.id, { action: "GET_TEMP_DATA" }, (response) => {
-            if (chrome.runtime.lastError || !response) return;
+            if (chrome.runtime.lastError) {
+                utils.showToast("페이지를 새로고침하거나 지원되지 않는 페이지입니다.");
+                return;
+            }
+
+            if (!response) return;
 
             if (response.error) {
-                showToast(response.error);
+                utils.showToast(response.error);
                 return;
             }
 
             const currentTemps = response.data;
             chrome.storage.local.get([STORAGE_KEY], (result) => {
                 const prev = result[STORAGE_KEY] || [];
+                const suggestedTitle = currentTemps['/market-products/new/basic']?.title?.substring(0, 15) || `템플릿 ${prev.length + 1}`;
+
                 const newEntry = {
                     id: Date.now(),
-                    title: currentTemps['/market-products/new/basic']?.title || `템플릿 ${prev.length + 1}`,
+                    title: suggestedTitle,
                     content: currentTemps
                 };
 
                 const updated = [newEntry, ...prev];
                 chrome.storage.local.set({ [STORAGE_KEY]: updated }, () => {
                     loadTemplates();
+                    utils.showToast("템플릿이 저장되었습니다! 🎉");
                 });
             });
         });
@@ -148,7 +184,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const newTemplates = Array.isArray(json) ? json : [json];
 
                 if (!newTemplates.every(t => t.title && t.content)) {
-                    showToast("올바르지 않은 템플릿 형식입니다.")
+                    utils.showToast("올바르지 않은 템플릿 형식입니다.")
+                    return;
                 }
 
                 const imported = newTemplates.map(t => ({
@@ -161,11 +198,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     const updated = [...imported, ...prev];
                     chrome.storage.local.set({ [STORAGE_KEY]: updated }, () => {
                         loadTemplates();
-                        showToast(`${imported.length}개의 템플릿을 가져왔습니다.`);
+                        utils.showToast(`${imported.length}개의 템플릿을 가져왔습니다.`);
                     });
                 });
             } catch (err) {
-                showToast("파일을 읽는 중 오류가 발생했습니다: " + err.message);
+                utils.showToast("파일을 읽는 중 오류가 발생했습니다.");
             }
             importInput.value = '';
         };
@@ -176,7 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(template, null, 2));
         const downloadAnchorNode = document.createElement('a');
         downloadAnchorNode.setAttribute("href", dataStr);
-        downloadAnchorNode.setAttribute("download", `template_${template.title}.json`);
+        downloadAnchorNode.setAttribute("download", `template_${template.title.replace(/[\/\\?%*:|"<>]/g, '-')}.json`);
         document.body.appendChild(downloadAnchorNode);
         downloadAnchorNode.click();
         downloadAnchorNode.remove();
