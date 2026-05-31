@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const importInput = document.getElementById('importInput');
     const templateList = document.getElementById('templateList');
     const STORAGE_KEY = 'fleamarket_templates';
+    const M = window.CONSTANTS.MESSAGES;
 
     let isProcessing = false;
 
@@ -33,12 +34,16 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderTemplates(templates) {
         templateList.innerHTML = '';
         const globalTooltip = document.getElementById('globalTooltip');
+        const templateCount = document.getElementById('templateCount');
+
+        templateCount.textContent = templates.length;
 
         if (templates.length === 0) {
             templateList.innerHTML = `
-                <div style="text-align:center;color:#999;padding:40px 20px;">
-                    <div>📂</div>
-                    <div style="margin-top:10px;font-size:13px;">저장된 템플릿이 없습니다.</div>
+                <div class="empty-state">
+                    <div class="empty-state-icon">📂</div>
+                    <div class="empty-state-title">저장된 템플릿이 없습니다</div>
+                    <div class="empty-state-desc">네이버 플리마켓 등록 페이지에서<br>'현재 페이지 저장'을 눌러 템플릿을 만들어 보세요</div>
                 </div>
             `;
             return;
@@ -53,19 +58,37 @@ document.addEventListener('DOMContentLoaded', () => {
             item.innerHTML = `
                 <div class="info-area">
                     <div class="template-name" title="${t.title}">${t.title}</div>
-                    <div class="template-date">${date}</div>
-                </div>
+                    <div class="template-date">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="9"/>
+                            <polyline points="12 7 12 12 15 14"/>
+                        </svg>
+                        ${date}
+                    </div>
                 </div>
                 <div class="btn-control-group">
-                    <button class="btn-icon btn-export" title="내보내기">저장</button>
-                    <button class="btn-icon btn-delete" title="삭제">삭제</button>
+                    <button class="btn-icon btn-export" title="JSON으로 내보내기">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                    </button>
+                    <button class="btn-icon btn-delete" title="삭제">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6"/>
+                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                            <path d="M10 11v6M14 11v6"/>
+                            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                        </svg>
+                    </button>
                 </div>
             `;
 
             item.addEventListener('mouseenter', () => {
                 const previewData = getPreviewData(t.content);
 
-                globalTooltip.innerHTML = previewData.map(d => `
+                globalTooltip.innerHTML = `<div class="preview-title">미리보기</div>` + previewData.map(d => `
                     <div class="preview-row">
                         <span class="preview-label">${d.label}</span>
                         <span class="preview-value">${d.value}</span>
@@ -79,45 +102,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 globalTooltip.classList.remove('show');
             });
 
-            item.querySelector('.info-area').addEventListener('click', async () => {
+            item.querySelector('.info-area').addEventListener('click', () => {
                 if (isProcessing) return;
                 isProcessing = true;
-                utils.showToast("⏳ 매크로 실행 요청...");
 
-                const timeoutId = setTimeout(() => {
-                    if (isProcessing) {
+                chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
+                    if (!tab?.id) {
                         isProcessing = false;
-                        utils.showToast("⏳ 응답 시간이 초과되었습니다.");
+                        utils.showToast(M.NO_ACTIVE_TAB, 'error');
+                        return;
                     }
-                }, 3000);
-
-                const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-                if (tab?.id) {
-                    chrome.tabs.sendMessage(tab.id, {
-                        action: "SET_TEMP_DATA",
-                        data: t.content
-                    }, (response) => {
-                        clearTimeout(timeoutId);
-                        if (!isProcessing) return;
-
-                        isProcessing = false;
-
-                        if (chrome.runtime.lastError) {
-                            utils.showToast("새로고침 하거나 지원되지 않는 페이지입니다.");
+                    // 먼저 PING 으로 "지원되는 페이지(content script 주입됨)"인지 확인한다.
+                    chrome.tabs.sendMessage(tab.id, { action: "PING" }, (resp) => {
+                        if (chrome.runtime.lastError || !resp || !resp.ok) {
+                            isProcessing = false;
+                            utils.showToast(M.NOT_SUPPORTED_PAGE, 'error');
                             return;
                         }
-
-                        if (response && response.error) {
-                            utils.showToast(response.error);
-                        } else if (response && response.success) {
-                            utils.showToast("✅ 입력 완료!");
-                        }
+                        // 지원되면 데이터를 보내고 팝업을 닫는다. 팝업이 열려 있으면 포커스를
+                        // 가져가서 페이지의 execCommand 입력이 폼에 저장되지 않으므로(뒤로 가면 빈칸),
+                        // 닫아서 페이지가 포커스를 되찾게 한다. 진행/완료/오류 토스트는 페이지에 표시된다.
+                        chrome.tabs.sendMessage(tab.id, { action: "SET_TEMP_DATA", data: t.content });
+                        window.close();
                     });
-                } else {
-                    clearTimeout(timeoutId);
-                    isProcessing = false;
-                    utils.showToast("활성화된 탭을 찾을 수 없습니다.");
-                }
+                });
             });
 
             item.querySelector('.btn-export').addEventListener('click', (e) => {
@@ -142,24 +150,26 @@ document.addEventListener('DOMContentLoaded', () => {
             const updated = list.filter(t => t.id !== id);
             chrome.storage.local.set({ [STORAGE_KEY]: updated }, () => {
                 loadTemplates();
+                utils.showToast(M.TEMPLATE_DELETED, 'success');
             });
         });
     }
 
     saveBtn.addEventListener('click', async () => {
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-        if (!tab) return;
+        if (!tab) {
+            utils.showToast(M.NO_ACTIVE_TAB, 'error');
+            return;
+        }
 
         chrome.tabs.sendMessage(tab.id, { action: "GET_TEMP_DATA" }, (response) => {
-            if (chrome.runtime.lastError) {
-                utils.showToast("페이지를 새로고침하거나 지원되지 않는 페이지입니다.");
+            if (chrome.runtime.lastError || !response) {
+                utils.showToast(M.NOT_SUPPORTED_PAGE, 'error');
                 return;
             }
 
-            if (!response) return;
-
             if (response.error) {
-                utils.showToast(response.error);
+                utils.showToast(response.error, 'warning');
                 return;
             }
 
@@ -177,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const updated = [newEntry, ...prev];
                 chrome.storage.local.set({ [STORAGE_KEY]: updated }, () => {
                     loadTemplates();
-                    utils.showToast("템플릿이 저장되었습니다! 🎉");
+                    utils.showToast(M.TEMPLATE_SAVED, 'success');
                 });
             });
         });
@@ -198,7 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const newTemplates = Array.isArray(json) ? json : [json];
 
                 if (!newTemplates.every(t => t.title && t.content)) {
-                    utils.showToast("올바르지 않은 템플릿 형식입니다.")
+                    utils.showToast(M.IMPORT_INVALID, 'error');
                     return;
                 }
 
@@ -212,11 +222,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     const updated = [...imported, ...prev];
                     chrome.storage.local.set({ [STORAGE_KEY]: updated }, () => {
                         loadTemplates();
-                        utils.showToast(`${imported.length}개의 템플릿을 가져왔습니다.`);
+                        utils.showToast(`${imported.length}개의 템플릿을 가져왔습니다`, 'success');
                     });
                 });
             } catch (err) {
-                utils.showToast("파일을 읽는 중 오류가 발생했습니다.");
+                utils.showToast(M.IMPORT_READ_ERROR, 'error');
             }
             importInput.value = '';
         };

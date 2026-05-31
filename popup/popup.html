@@ -9,19 +9,36 @@
 
 <body>
     <div class="header">
-        <div class="title">N플리마켓 매크로</div>
-        <div class="subtitle">템플릿을 저장하고 관리하세요</div>
+        <div class="header-logo">N</div>
+        <div class="header-text">
+            <div class="title">N플리마켓 매크로</div>
+            <div class="subtitle">상품 정보를 템플릿으로 저장하고 관리하세요</div>
+        </div>
     </div>
 
     <div class="button-group">
-        <button id="saveBtn" class="btn btn-save">현재 페이지 상품 정보 저장하기</button>
-        <button id="importBtn" class="btn btn-import">JSON 파일에서 가져오기</button>
+        <button id="saveBtn" class="btn btn-save">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                <polyline points="17 21 17 13 7 13 7 21"/>
+                <polyline points="7 3 7 8 15 8"/>
+            </svg>
+            현재 페이지 저장
+        </button>
+        <button id="importBtn" class="btn btn-import">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            가져오기
+        </button>
         <input type="file" id="importInput" accept=".json" style="display: none;">
     </div>
 
     <div class="section-title">
         <span>저장된 템플릿</span>
-        <!-- Optional: search or sort could go here -->
+        <span class="template-count" id="templateCount">0</span>
     </div>
 
     <div class="template-list" id="templateList">

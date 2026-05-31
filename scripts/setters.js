@@ -1,55 +1,67 @@
+const S = window.CONSTANTS.SELECTORS;
+const T = window.CONSTANTS.UI_TEXT;
+const P = window.CONSTANTS.PATHS;
+const M = window.CONSTANTS.MESSAGES;
+
+// 어느 단계에서 무엇을 하고 있는지 콘솔에 남긴다. (실패 시 원인 추적용)
+const log = (...args) => console.log('[매크로]', ...args);
+
 window.setters = {
-    [CONSTANTS.PATHS.BASIC]: async (data) => {
-        document.querySelector(CONSTANTS.SELECTORS.CATEGORY_BTN)?.click();
-        await utils.waitForElement(CONSTANTS.SELECTORS.CATEGORY_UNIT);
-        await setters[CONSTANTS.PATHS.CATEGORIES](data);
+    [P.BASIC]: async (data) => {
+        log('basic 단계 시작');
+        document.querySelector(S.CATEGORY_BTN)?.click();
+        await utils.waitForElement(S.CATEGORY_UNIT);
+        await setters[P.CATEGORIES](data);
         await utils.wait();
 
-        document.querySelector(CONSTANTS.SELECTORS.INFO_CHIP)?.click();
-        await utils.waitForElementByText('button', window.CONSTANTS.UI_TEXT.NONE);
-        await setters[CONSTANTS.PATHS.PROPERTIES](data);
+        document.querySelector(S.INFO_CHIP)?.click();
+        await utils.waitForElementByText('button', T.NONE);
+        await setters[P.PROPERTIES](data);
         await utils.wait();
 
-        const basicData = data[CONSTANTS.PATHS.BASIC];
-        await utils.setReactValue(CONSTANTS.SELECTORS.TITLE, basicData.title);
-        await utils.setReactValue(CONSTANTS.SELECTORS.PRODUCT_NAME, basicData.productName);
+        const basicData = data[P.BASIC];
+        await utils.setReactValue(S.TITLE, basicData.title);
+        await utils.setReactValue(S.PRODUCT_NAME, basicData.productName);
 
         if (basicData.productStatus) {
             await utils.wait(1000);
-            utils.setReactChecked(`${CONSTANTS.SELECTORS.PRODUCT_STATUS}[value="${basicData.productStatus}"]`, true);
+            utils.setReactChecked(`${S.PRODUCT_STATUS}[value="${basicData.productStatus}"]`, true);
         }
 
-        await utils.wait(1000)
-        await utils.clickByText(CONSTANTS.SELECTORS.NEXT_BUTTON, window.CONSTANTS.UI_TEXT.NEXT);
-        await setters[CONSTANTS.PATHS.ATTACHMENTS](data);
+        await utils.wait(1000);
+        await utils.clickActionButton(T.NEXT);
+        await setters[P.ATTACHMENTS](data);
     },
 
-    [CONSTANTS.PATHS.CATEGORIES]: async (data) => {
-        const categoryData = data[CONSTANTS.PATHS.BASIC].category;
+    [P.CATEGORIES]: async (data) => {
+        log('카테고리 선택');
+        const categoryData = data[P.BASIC].category;
         const paths = typeof categoryData === 'string' ? categoryData.split(' > ') : [];
 
         for (const name of paths) {
-            const target = await utils.clickByText(CONSTANTS.SELECTORS.CATEGORY_TEXT, name.trim());
+            const target = await utils.clickByText(S.CATEGORY_TEXT, name.trim());
             if (target) await utils.wait();
         }
-        (await utils.waitForElementByText('button', window.CONSTANTS.UI_TEXT.COMPLETE)).click();
+        (await utils.waitForElementByText('button', T.COMPLETE)).click();
     },
 
-    [CONSTANTS.PATHS.PROPERTIES]: async () => {
-        const noBrandBtn = utils.clickByText('button', window.CONSTANTS.UI_TEXT.NONE);
+    [P.PROPERTIES]: async () => {
+        log('상품 속성(브랜드 등) 처리');
+        const noBrandBtn = utils.clickByText('button', T.NONE);
 
         if (noBrandBtn) {
-            await utils.wait()
-            await utils.clickByText('button', window.CONSTANTS.UI_TEXT.COMPLETE);
+            await utils.wait();
+            await utils.clickByText('button', T.COMPLETE);
 
-            await utils.wait()
-            await utils.clickByText('button', window.CONSTANTS.UI_TEXT.STOP) || await utils.clickByText('button', window.CONSTANTS.UI_TEXT.CONFIRM);
+            await utils.wait();
+            await utils.clickByText('button', T.STOP) || await utils.clickByText('button', T.CONFIRM);
         }
     },
 
-    [CONSTANTS.PATHS.ATTACHMENTS]: async (data) => {
-        const attachmentData = data[CONSTANTS.PATHS.ATTACHMENTS];
-        const fileInput = await utils.waitForElement(CONSTANTS.SELECTORS.UPLOAD_INPUT);
+    [P.ATTACHMENTS]: async (data) => {
+        log('사진/부가정보 단계 시작');
+        const attachmentData = data[P.ATTACHMENTS];
+        const fileInput = await utils.waitForElement(S.UPLOAD_INPUT);
 
         if (attachmentData.images && attachmentData.images.length > 0) {
             const dataTransfer = new DataTransfer();
@@ -61,7 +73,7 @@ window.setters = {
                     const file = new File([blob], `image_${i}.png`, { type: "image/png" });
                     dataTransfer.items.add(file);
                 } catch (e) {
-                    console.error(`사진 ${i}번 변환 실패:`, e);
+                    console.error(`[매크로] 사진 ${i}번 변환 실패:`, e);
                 }
             }
 
@@ -71,98 +83,126 @@ window.setters = {
             await utils.wait(1500);
         }
 
-        const caseBtn = document.querySelector('#hasCase');
+        const caseBtn = document.querySelector(S.HAS_CASE);
         if (caseBtn && caseBtn.checked !== attachmentData.hasCase) {
-            utils.setReactChecked('#hasCase', attachmentData.hasCase);
+            utils.setReactChecked(S.HAS_CASE, attachmentData.hasCase);
         }
 
-        const warrantyBtn = document.querySelector('#hasWarranty');
+        const warrantyBtn = document.querySelector(S.HAS_WARRANTY);
         if (warrantyBtn && warrantyBtn.checked !== attachmentData.hasWarranty) {
-            utils.setReactChecked('#hasWarranty', attachmentData.hasWarranty);
+            utils.setReactChecked(S.HAS_WARRANTY, attachmentData.hasWarranty);
         }
 
-        await utils.clickByText('button', window.CONSTANTS.UI_TEXT.NEXT);
-        await setters[CONSTANTS.PATHS.DESCRIPTION](data);
+        await utils.clickActionButton(T.NEXT);
+        await setters[P.DESCRIPTION](data);
     },
 
-    [CONSTANTS.PATHS.DESCRIPTION]: async (data) => {
-        const descriptionData = data[CONSTANTS.PATHS.DESCRIPTION];
-        await utils.waitForElement(CONSTANTS.SELECTORS.DESCRIPTION);
+    [P.DESCRIPTION]: async (data) => {
+        log('설명 단계 시작');
+        const descriptionData = data[P.DESCRIPTION];
+        await utils.waitForElement(S.DESCRIPTION);
         await utils.wait();
 
-        await utils.setReactValue(CONSTANTS.SELECTORS.DESCRIPTION, descriptionData.description);
+        await utils.setReactValue(S.DESCRIPTION, descriptionData.description);
 
         await utils.wait();
-        await utils.clickByText('button', window.CONSTANTS.UI_TEXT.NEXT);
-        await setters[CONSTANTS.PATHS.PRICE](data);
+        await utils.clickActionButton(T.NEXT);
+        await setters[P.PRICE](data);
     },
 
-    [CONSTANTS.PATHS.PRICE]: async (data) => {
-        const priceData = data[CONSTANTS.PATHS.PRICE];
+    [P.PRICE]: async (data) => {
+        log('가격 단계 시작');
+        const priceData = data[P.PRICE];
         await utils.waitForElement('input[placeholder="원"]');
         await utils.setReactValue('input[placeholder="원"]', priceData.price);
-        (await utils.waitForElementByText('button', window.CONSTANTS.UI_TEXT.CONFIRM)).click();
+        (await utils.waitForElementByText('button', T.CONFIRM)).click();
 
-        await utils.waitForElement('.productsNew_priceMarketSaleType__51dFb');
+        await utils.waitForElement(S.PRICE_SALE_TYPE_BOX);
 
         if (priceData.saleType) {
-            utils.setReactChecked(`${CONSTANTS.SELECTORS.SALE_TYPE}[value="${priceData.saleType}"]`, true);
+            utils.setReactChecked(`${S.SALE_TYPE}[value="${priceData.saleType}"]`, true);
             await utils.wait(200);
         }
 
-        const negBtn = document.querySelector(CONSTANTS.SELECTORS.NEGOTIATION_CHECKBOX);
+        const negBtn = document.querySelector(S.NEGOTIATION_CHECKBOX);
         if (negBtn && negBtn.checked !== priceData.canNegotiate) {
-            utils.setReactChecked(CONSTANTS.SELECTORS.NEGOTIATION_CHECKBOX, priceData.canNegotiate);
+            utils.setReactChecked(S.NEGOTIATION_CHECKBOX, priceData.canNegotiate);
         }
 
-        const crossBtn = document.querySelector(CONSTANTS.SELECTORS.CROSS_POSTING_CHECKBOX);
+        // 다른 마켓 동시 등록 체크박스 — 계정/조건에 따라 아예 안 보일 수 있으므로 있을 때만 처리
+        const crossBtn = document.querySelector(S.CROSS_POSTING_CHECKBOX);
         if (crossBtn && crossBtn.checked !== priceData.isCrossPosting) {
-            utils.setReactChecked(CONSTANTS.SELECTORS.CROSS_POSTING_CHECKBOX, priceData.isCrossPosting);
+            utils.setReactChecked(S.CROSS_POSTING_CHECKBOX, priceData.isCrossPosting);
+        } else if (!crossBtn) {
+            log('동시등록 체크박스가 이 페이지에 없어 건너뜀');
         }
 
-        await utils.clickByText(CONSTANTS.SELECTORS.NEXT_BUTTON, window.CONSTANTS.UI_TEXT.NEXT);
+        await utils.clickActionButton(T.NEXT);
 
         if (priceData.saleType === 'NO_SAFETY') {
-            const confirmBtn = await utils.waitForElementByText('.BottomSheetUi_container__CEqYQ button', window.CONSTANTS.UI_TEXT.CONFIRM).catch(() => null);
+            const confirmBtn = await utils.waitForElementByText(`${S.BOTTOM_SHEET} button`, T.CONFIRM).catch(() => null);
+            if (confirmBtn) confirmBtn.click();
+        }
 
-            if (confirmBtn) {
-                confirmBtn.click();
+        await setters[P.DELIVERY](data);
+    },
+
+    [P.DELIVERY]: async (data) => {
+        log('배송/거래방식 단계 시작');
+        const { delivery } = data[P.DELIVERY];
+
+        // 택배 선택. 이 항목은 내부 input 없는 Switch 라 라벨 click 으로만 토글되고,
+        // 켜지면 class 에 isChecked(SwitchUi_isChecked__...) 가 붙는다. 기본값은 "둘 다 꺼짐"
+        // 이라 반드시 능동적으로 켜야 하며, 클릭이 한 번에 안 먹을 수 있으므로
+        // 실제로 isChecked 가 붙을 때까지 재시도 + 검증한다. (안 켜지면 직거래로 제출돼 400)
+        if (delivery.useCourier) {
+            const getCourier = () => [...document.querySelectorAll('label')]
+                .find(el => el.innerText.includes(T.COURIER_LABEL));
+            const isOn = (el) => (el?.getAttribute('class') || '').includes('isChecked');
+
+            await utils.waitForElementByText('label', T.COURIER_LABEL).catch(() => null);
+
+            let courier = getCourier();
+            for (let i = 0; i < 6; i++) {
+                courier = getCourier();
+                if (!courier) { await utils.wait(300); continue; }
+                if (isOn(courier)) break;
+                courier.click();
+                await utils.wait(400);
+            }
+
+            if (!courier) {
+                console.warn('[매크로] "택배로 보낼게요" 항목을 찾지 못했습니다.');
+            } else if (!isOn(courier)) {
+                console.warn('[매크로] 택배 선택이 끝내 반영되지 않았습니다.');
+            } else {
+                log('택배 선택 완료');
             }
         }
 
-        await setters[CONSTANTS.PATHS.DELIVERY](data);
+        await utils.wait();
+        await utils.clickActionButton(T.NEXT);
+        await setters[P.PUBLISH_CONFIGS](data);
     },
 
-    [CONSTANTS.PATHS.DELIVERY]: async (data) => {
-        const deliveryInfo = data[CONSTANTS.PATHS.DELIVERY];
-        const { delivery } = deliveryInfo;
-
-        if (delivery.useCourier) {
-            document.evaluate("//span[contains(., '택배')]", document, null, 9, null).singleNodeValue?.click();
-        }
-
-        await utils.wait()
-        await utils.clickByText(CONSTANTS.SELECTORS.NEXT_BUTTON, window.CONSTANTS.UI_TEXT.NEXT);
-        await setters[CONSTANTS.PATHS.PUBLISH_CONFIGS](data);
-    },
-
-    [CONSTANTS.PATHS.REGION]: async (data) => {
-        const locations = data[CONSTANTS.PATHS.DELIVERY].directTrade.locations;
+    [P.REGION]: async (data) => {
+        const locations = data[P.DELIVERY].directTrade.locations;
         for (const fullLoc of locations) {
             const parts = fullLoc.split(' ').filter(t => t.trim() !== "");
             for (const part of parts) {
-                const chip = await utils.clickByText(CONSTANTS.SELECTORS.REGION_CHIP, part);
+                const chip = await utils.clickByText(S.REGION_CHIP, part);
                 if (chip) await utils.wait(800);
             }
         }
-        (await utils.waitForElementByText('span', window.CONSTANTS.UI_TEXT.COMPLETE)).closest(CONSTANTS.SELECTORS.REGION_COMPLETE_BTN)?.click();
+        (await utils.waitForElementByText('span', T.COMPLETE)).closest(S.REGION_COMPLETE_BTN)?.click();
     },
 
-    [CONSTANTS.PATHS.PUBLISH_CONFIGS]: async (data) => {
-        await utils.waitForElement(CONSTANTS.SELECTORS.BOARD_NAME);
+    [P.PUBLISH_CONFIGS]: async (data) => {
+        log('게시판/공개설정 단계 시작');
+        await utils.waitForElement(S.BOARD_NAME);
 
-        const target = data[CONSTANTS.PATHS.PUBLISH_CONFIGS].boardName;
-        const currentBoardEl = document.querySelector(CONSTANTS.SELECTORS.BOARD_NAME);
+        const target = data[P.PUBLISH_CONFIGS].boardName;
+        const currentBoardEl = document.querySelector(S.BOARD_NAME);
 
         const currentBoard = currentBoardEl?.innerText.replace(/\s/g, '');
         const targetClean = target?.replace(/\s/g, '');
@@ -171,22 +211,24 @@ window.setters = {
             currentBoardEl.closest('a')?.click();
 
             await utils.wait(1000);
-            await setters[CONSTANTS.PATHS.CAFE_MENUS](data);
+            await setters[P.CAFE_MENUS](data);
             await utils.wait(1000);
         }
 
         await utils.wait();
-        utils.showToast(window.CONSTANTS.UI_TEXT.INPUT_COMPLETED);
+        utils.showToast(M.MACRO_DONE, 'success');
+        log('자동 입력 완료 (등록 버튼은 직접 눌러 확인하세요)');
     },
 
-    [CONSTANTS.PATHS.CAFE_MENUS]: async (data) => {
-        const target = data[CONSTANTS.PATHS.PUBLISH_CONFIGS].boardName;
-        await utils.waitForElement(CONSTANTS.SELECTORS.CAFE_MENU_TEXT);
-        const found = [...document.querySelectorAll(CONSTANTS.SELECTORS.CAFE_MENU_TEXT)].find(el => el.innerText.includes(target));
+    [P.CAFE_MENUS]: async (data) => {
+        log('게시판(카페 메뉴) 선택');
+        const target = data[P.PUBLISH_CONFIGS].boardName;
+        await utils.waitForElement(S.CAFE_MENU_TEXT);
+        const found = [...document.querySelectorAll(S.CAFE_MENU_TEXT)].find(el => el.innerText.includes(target));
         if (found) {
             found.closest('button')?.click();
             await utils.wait(500);
-            (await utils.waitForElementByText('span', window.CONSTANTS.UI_TEXT.COMPLETE)).closest('button')?.click();
+            (await utils.waitForElementByText('span', T.COMPLETE)).closest('button')?.click();
         }
     }
 };
